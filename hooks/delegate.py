@@ -85,8 +85,8 @@ if __name__ == "__main__":
 
     scripts_path = os.path.join(script_path, hook + ".d")
     for subdir, dirs, files in natsorted(os.walk(scripts_path)):
-        groups = os.path.relpath(subdir, scripts_path).split(os.path.sep)
-        if any(not group[0].isdigit() for group in groups):
+        groups = [group for group in os.path.relpath(subdir, scripts_path).split(os.path.sep) if group != "."]
+        if any(not (group[0] == "." or group[0].isdigit()) for group in groups):
             continue
         depth = len(groups)
         if files and depth > 0:
