@@ -1,0 +1,30 @@
+#!/usr/bin/env python3
+
+import sys
+
+from metadata import *
+
+PROBLEM = "'{}.meta' has been renamed (from '{}.meta') but its asset has not."
+FIX = "To fix, make sure '{0}' is in the same directory as '{0}.meta'. (Is " \
+      "it still at '{1}'?)"
+
+if __name__ == "__main__":
+    renamed_assets = set()
+    renamed_metadata = set()
+
+    for (head_path, staged_path) in staged_paths(change_type="R"):
+        if staged_path.startswith(ASSETS_DIR):
+            if staged_path.endswith(META_EXT):
+                renamed_metadata.add(
+                    (head_path[:-len(META_EXT)], staged_path[:-len(META_EXT)]))
+            else:
+                renamed_assets.add((head_path, staged_path))
+
+    missing_assets = renamed_metadata - renamed_assets
+
+    for (head_path, staged_path) in missing_assets:
+        print(PROBLEM.format(staged_path, head_path), file=sys.stderr)
+        print(FIX.format(staged_path, head_path), file=sys.stderr)
+
+    if missing_assets:
+        sys.exit(1)

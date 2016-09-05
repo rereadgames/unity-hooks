@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+
+import sys
+
+import git
+
+from version import *
+
+MULTIPLE_STAGED_ERROR = "Multiple files staged for '{}'."
+
+EXPLAIN = """\
+The version of the project has changed from '{}' to '{}' (which I think is
+equivalent). This looks like the project is the same version, just on a
+different platform. Check that this is the case - if it isn't you must update
+the hook to allow the variation and commit this change.""".replace("\n", " ")
+
+FIX = """
+You should remove the file from the commit ('git reset {0}'). You can also
+ignore changes to the file in future with 'git update-index --assume-unchanged
+{0}' - make sure you commit it if you actually update the project
+though.""".replace("\n", " ")
+
+
+def path_filter(path):
+    def f(entry):
+        return entry[1].path == path
+    return f
+
+
+if __name__ == "__main__":
+    repo = git.Repo(search_parent_directories=True)
+
+    fail = False
+
+    for file in repo.head.commit.diff():
+        path = file.a_path
+        if file.a_path.endswith(VERSION_FILE):
+            index_version = None
+            for (stage, blob) in repo.index.iter_blobs(path_filter(path)):
+                if index_version:
+                    raise Exception(MULTIPLE_STAGED_ERROR.format(path))
+                index_version = extract_version(blob)
+            head_version = extract_version(repo.head.commit.tree[path])
+
+            if head_version != index_version:
+                if head_version == normalize(index_version):
+                    print(EXPLAIN.format(head_version, index_version),
+                          file=sys.stderr)
+                    print(FIX.format(path))
+                    fail = True
+
+    if fail:
+        sys.exit(1)

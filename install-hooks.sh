@@ -6,7 +6,10 @@ if ! [ -d ".git" ]; then
 fi
 
 SCRIPT_DIR=$(cd "${0%/*}" && pwd)
+SCRIPTS=(pre-commit post-checkout post-merge)
 
-ln -s $SCRIPT_DIR/hooks .git/hooks
+for SCRIPT in "${SCRIPTS[@]}"; do
+    ln -s "$SCRIPT_DIR/hooks/delegate.py" ".git/hooks/$SCRIPT"
+done
 
 echo "Installed Unity hooks."

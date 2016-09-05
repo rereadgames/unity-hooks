@@ -1,0 +1,56 @@
+#!/usr/bin/env python3
+
+import sys
+
+import git
+
+from metadata import *
+
+MULTIPLE_STAGED_ERROR = "Multiple files staged for '{}'."
+
+EXPLAIN = "The guid in the metadata file '{}' has changed - most likely it got " \
+          "deleted and generated again by Unity."
+
+FIX = "You should revert it to the old version. If the old asset was deleted " \
+      "and this one is different with the same name, split the deletion of " \
+      "the old asset and the creation of the new one across two commits."
+
+
+def path_filter(index_path):
+    def f(entry):
+        return entry[1].path == index_path
+    return f
+
+
+def extract_guid(obj):
+    for line in obj.data_stream.read().decode("utf-8").split("\n"):
+        if line.startswith("guid:"):
+            return line.split(" ")[1].strip()
+
+
+if __name__ == "__main__":
+    repo = git.Repo(search_parent_directories=True)
+
+    fail = False
+
+    for file in repo.head.commit.diff():
+        if file.change_type in ["R", "M"]:
+            head_path = file.a_path
+            index_path = file.b_path
+            if file.a_path.endswith(META_EXT):
+                index_version = None
+                f = path_filter(index_path)
+                for (stage, blob) in repo.index.iter_blobs(f):
+                    if index_version:
+                        raise Exception(MULTIPLE_STAGED_ERROR.format(index_path))
+                    index_version = extract_guid(blob)
+                head_version = extract_guid(repo.head.commit.tree[head_path])
+
+                if head_version != index_version:
+                    print(EXPLAIN.format(index_path),
+                          file=sys.stderr)
+                    print(FIX)
+                    fail = True
+
+    if fail:
+        sys.exit(1)

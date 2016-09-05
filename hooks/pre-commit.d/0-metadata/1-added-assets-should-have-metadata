@@ -1,0 +1,28 @@
+#!/usr/bin/env python3
+
+import sys
+
+from metadata import *
+
+PROBLEM = "'{}' has been added but its metadata file is missing."
+FIX = "To fix, add '{0}.meta' or do not add '{0}'."
+
+if __name__ == "__main__":
+    added_assets = set()
+    added_metadata = set()
+
+    for path, _ in staged_paths(change_type="A"):
+        if path.startswith(ASSETS_DIR):
+            if path.endswith(META_EXT):
+                added_metadata.add(path[:-len(META_EXT)])
+            else:
+                added_assets.add(path)
+
+    missing_metadata = added_assets - added_metadata
+
+    for path in missing_metadata:
+        print(PROBLEM.format(path), file=sys.stderr)
+        print(FIX.format(path), file=sys.stderr)
+
+    if missing_metadata:
+        sys.exit(1)
