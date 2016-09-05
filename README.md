@@ -2,25 +2,21 @@
 
 Git hooks for Unity project.
 
-To manage a Unity project, the Assets meta file should also been added to
-repository. But sometimes the meta files and the corresponding asset files
-and directories are inconsistent, then meta files will lead to conflicts when
-a team is collabarating on the same code base.
+Unity projects use `.meta` files to manage assets, but these can become inconsistent with the actual assets, especially
+when mixed with version control. This can lead to conflicts.
+
+Unity also seems to use multiple versions
 
 ## Features
 
-- Stop committing if meta files and asset files and directories are
-  inconsistent. If an asset file is added, its meta file and meta files of all
-  its containing directories should also been added. If a asset file is
-  deleted, its meta file and meta files of all its empty containing
-  directories should also been deleted. When meta files are added/deleted,
-  asset files and directories should also been consistent.
-- Delete empty asset directories after checkout and merge. Unity keep
-  generating meta file for empty asset directory, but git does not trace
-  directory.
+- Stop committing if meta files are inconsistent - if a file is added, check it has a `.meta` file, if removed, check
+  there isn't one, and do the same in reverse for meta files without base files.
+- Delete empty asset directories after checkout and merge. Unity generates `.meta` files for empty asset directories,
+  but git ignores them. This causes hanging `.meta` files.
 
 ## Usage
 
-Copy files `post-checkout` `post-merge` and `pre-commit` to .git/hooks in your
-git repository. If you also have hooks defined in these files, append them to
-existing files.
+Run `install-hooks.sh` from within the repository you wish to add the hooks to. You may need to delete an exisitng
+`.git/hooks` folder first.
+
+If you have other hooks you want to run as well, instead make those hooks call these scripts.
