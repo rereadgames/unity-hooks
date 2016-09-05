@@ -4,7 +4,8 @@ if not exist ".git" (
     exit /b 1
 )
 
-mklink /d "%cd%\.git\hooks" "%~dp0hooks"
+FOR %%A IN (pre-commit post-checkout post-merge) DO mklink /d "%cd%\.git\hooks\%A" "%~dp0delegate.py"
+
 if %errorlevel%==0 (
 	echo Installed Unity hooks.
 ) else (
