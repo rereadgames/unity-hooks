@@ -5,26 +5,16 @@ import sys
 from metadata import *
 
 PROBLEM = "'{}' has been renamed (from '{}') but its metadata has not."
-FIX = "To fix, make sure '{0}.meta' is in the same directory as '{0}'. (Is " \
-      "it still at '{1}.meta'?)"
 
 if __name__ == "__main__":
-    renamed_assets = set()
-    renamed_metadata = set()
+    fail = False
 
-    for (head_path, staged_path) in staged_paths(change_type="R"):
-        if staged_path.startswith(ASSETS_DIR):
-            if staged_path.endswith(META_EXT):
-                renamed_metadata.add(
-                    (head_path[:-len(META_EXT)], staged_path[:-len(META_EXT)]))
-            else:
-                renamed_assets.add((head_path, staged_path))
+    renamed_assets_without_renamed_metadata = \
+        renamed_assets() - assets_for(renamed_metadata())
 
-    missing_metadata = renamed_assets - renamed_metadata
+    for old_name, new_name in renamed_assets_without_renamed_metadata:
+        print(PROBLEM.format(new_name, old_name), file=sys.stderr)
+        fail = True
 
-    for (head_path, staged_path) in missing_metadata:
-        print(PROBLEM.format(staged_path, head_path), file=sys.stderr)
-        print(FIX.format(staged_path, head_path), file=sys.stderr)
-
-    if missing_metadata:
+    if fail:
         sys.exit(1)

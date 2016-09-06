@@ -4,25 +4,18 @@ import sys
 
 from metadata import *
 
-PROBLEM = "'{}' has been deleted but its metadata file has not."
-FIX = "To fix, delete '{0}.meta' or do not delete '{0}'."
+PROBLEM = "'{}' has been deleted but its metadata has not been."
 
 if __name__ == "__main__":
-    deleted_assets = set()
-    deleted_metadata = set()
+    fail = False
 
-    for path, _ in staged_paths(change_type="D"):
-        if path.startswith(ASSETS_DIR):
-            if path.endswith(META_EXT):
-                deleted_metadata.add(path[:-len(META_EXT)])
-            else:
-                deleted_assets.add(path)
+    deleted_assets_with_remaining_metadata = \
+        deleted_assets() - assets_for(deleted_metadata())
 
-    redundant_metadata = deleted_assets - deleted_metadata
+    for name in deleted_assets_with_remaining_metadata:
+        if name not in assets_for(deleted_metadata_mistaken_as_rename()):
+            print(PROBLEM.format(name), file=sys.stderr)
+            fail = True
 
-    for path in redundant_metadata:
-        print(PROBLEM.format(path), file=sys.stderr)
-        print(FIX.format(path), file=sys.stderr)
-
-    if redundant_metadata:
+    if fail:
         sys.exit(1)
