@@ -24,8 +24,8 @@ For Windows/Gitbash users the default python3 installation will not add a "pytho
 yourself simply ensure that the python3 installation directory is on the path and add a symbolic link from "python.exe"
 to "python3.exe" as such:
 
-cd [python installation dir]
-mklink "python3.exe" "python.exe"
+`cd [python installation dir]
+mklink "python3.exe" "python.exe"`
 
 The result should be a link file called "python3.exe" in the python installation directory pointing at "python.exe".
 
