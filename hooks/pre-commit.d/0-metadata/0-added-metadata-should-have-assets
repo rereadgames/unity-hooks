@@ -4,25 +4,17 @@ import sys
 
 from metadata import *
 
-PROBLEM = "'{}.meta' has been added but the asset it is for is missing."
-FIX = "To fix, add '{0}' or do not add '{0}.meta'."
+PROBLEM = "'{}' has been added but its asset is missing."
 
 if __name__ == "__main__":
-    added_assets = set()
-    added_metadata = set()
+    fail = False
 
-    for path, _ in staged_paths(change_type="A"):
-        if path.startswith(ASSETS_DIR):
-            if path.endswith(META_EXT):
-                added_metadata.add(path[:-len(META_EXT)])
-            else:
-                added_assets.add(path)
+    metadata_missing_asset = added_metadata() - metadata_for(added_assets())
 
-    missing_metadata = added_metadata - added_assets
+    for name in metadata_missing_asset:
+        print(PROBLEM.format(name), file=sys.stderr)
+        fail = True
 
-    for path in missing_metadata:
-        print(PROBLEM.format(path), file=sys.stderr)
-        print(FIX.format(path), file=sys.stderr)
-
-    if missing_metadata:
+    if fail:
         sys.exit(1)
+

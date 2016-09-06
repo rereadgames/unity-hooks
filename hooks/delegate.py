@@ -2,7 +2,6 @@
 
 import sys
 import os
-from contextlib import suppress
 
 from natsort import natsorted
 import envoy

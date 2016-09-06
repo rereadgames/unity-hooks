@@ -8,8 +8,8 @@ from metadata import *
 
 MULTIPLE_STAGED_ERROR = "Multiple files staged for '{}'."
 
-EXPLAIN = "The guid in the metadata file '{}' has changed - most likely it got " \
-          "deleted and generated again by Unity."
+EXPLAIN = "The guid in the metadata file '{}' has changed - most likely it " \
+          "got deleted and generated again by Unity."
 
 FIX = "You should revert it to the old version. If the old asset was deleted " \
       "and this one is different with the same name, split the deletion of " \
