@@ -20,4 +20,13 @@ Unity also seems to use platform-specific versioning, that can result in ping-po
 
 Requires Python 3.5. Do a `pip install -r requirements.txt` to get the dependencies.
 
+For Windows/Gitbash users the default python3 installation will not add a "python3" executable to the path. To add one
+yourself simply ensure that the python3 installation directory is on the path and add a symbolic link from "python.exe"
+to "python3.exe" as such:
+
+cd [python installation dir]
+mklink "python3.exe" "python.exe"
+
+The result should be a link file called "python3.exe" in the python installation directory pointing at "python.exe".
+
 Run `install-hooks.sh`/`install-hooks.bat` from within the repository you wish to add the hooks to.
