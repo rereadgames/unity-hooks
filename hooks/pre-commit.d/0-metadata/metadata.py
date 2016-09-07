@@ -1,19 +1,51 @@
 #!/usr/bin/env python3
 
+import os
+
 import git
 
 META_EXT = ".meta"
 ASSETS_DIR = "Assets"
 
+MULTIPLE_STAGED_ERROR = "Multiple files staged for '{}'."
+
+
+def repo():
+    if not repo.repo:
+        repo.repo = git.Repo(search_parent_directories=True)
+    return repo.repo
+repo.repo = None
+
 
 def staged_paths(*, change_type):
-    repo = git.Repo(search_parent_directories=True)
-    return paths(repo.head.commit.diff(), change_type=change_type)
+    return paths(repo().head.commit.diff(), change_type=change_type)
 
 
 def paths(diffs, *, change_type):
     for diff in diffs.iter_change_type(change_type):
         yield (diff.a_path, diff.b_path)
+
+
+def get_working_dir_content_for(path):
+    with open(os.path.join(repo().working_dir, path)) as f:
+        return f.read()
+
+
+def get_staged_content_for(path):
+    content = None
+    for (stage, blob) in repo().index.iter_blobs(lambda e: e[1].path == path):
+        if content is not None:
+            raise Exception(MULTIPLE_STAGED_ERROR.format(path))
+        content = blob.data_stream.read().decode("utf-8")
+    return content
+
+
+def is_directory_metadata(metadata):
+    return "folderAsset: yes" in metadata
+
+
+def get_head_content_for(path):
+    return repo().head.commit.tree[path].data_stream.read().decode("utf-8")
 
 
 def in_asset_dir(*paths):
@@ -33,11 +65,17 @@ def assets_for(paths):
 
 
 def metadata_name(path):
-    return path + META_EXT
+    if isinstance(path, str):
+        return path + META_EXT
+    else:
+        return metadata_name(path[0]), metadata_name(path[1])
 
 
 def asset_name(path):
-    return path[:-len(META_EXT)]
+    if isinstance(path, str):
+        return path[:-len(META_EXT)]
+    else:
+        return asset_name(path[0]), asset_name(path[1])
 
 
 def added():
