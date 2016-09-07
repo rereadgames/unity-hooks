@@ -33,11 +33,17 @@ def assets_for(paths):
 
 
 def metadata_name(path):
-    return path + META_EXT
+    if isinstance(path, str):
+        return path + META_EXT
+    else:
+        return metadata_name(path[0]), metadata_name(path[1])
 
 
 def asset_name(path):
-    return path[:-len(META_EXT)]
+    if isinstance(path, str):
+        return path[:-len(META_EXT)]
+    else:
+        return asset_name(path[0]), asset_name(path[1])
 
 
 def added():
