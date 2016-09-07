@@ -12,8 +12,9 @@ if __name__ == "__main__":
     metadata_missing_asset = added_metadata() - metadata_for(added_assets())
 
     for name in metadata_missing_asset:
-        print(PROBLEM.format(name), file=sys.stderr)
-        fail = True
+        if not is_directory_metadata(get_staged_content_for(name)):
+            print(PROBLEM.format(name), file=sys.stderr)
+            fail = True
 
     if fail:
         sys.exit(1)
