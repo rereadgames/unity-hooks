@@ -13,7 +13,7 @@ if __name__ == "__main__":
         deleted_metadata() - metadata_for(deleted_assets())
 
     for name in deleted_metadata_with_remaining_asset:
-        if not is_directory_metadata(get_staged_content_for(name)):
+        if not is_directory_metadata(get_head_content_for(name)):
             print(PROBLEM.format(name), file=sys.stderr)
             fail = True
 
