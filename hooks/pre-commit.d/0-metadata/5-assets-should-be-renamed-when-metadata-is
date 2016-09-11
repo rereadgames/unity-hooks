@@ -14,8 +14,10 @@ if __name__ == "__main__":
 
     for old_name, new_name in renamed_metadata_without_renamed_asset:
         if (old_name, new_name) not in likely_mistaken_renames():
-            print(PROBLEM.format(new_name, old_name), file=sys.stderr)
-            fail = True
+            if not (is_directory_metadata(get_staged_content_for(new_name)) or
+                    is_directory_metadata(get_head_content_for(old_name))):
+                print(PROBLEM.format(new_name, old_name), file=sys.stderr)
+                fail = True
 
     if fail:
         sys.exit(1)
