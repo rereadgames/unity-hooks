@@ -10,9 +10,5 @@ def normalize(version):
     return version.replace("Linux", "").replace("x", "")
 
 
-def extract_version(obj):
-    return split_version(obj.data_stream.read().decode("utf-8"))
-
-
-def split_version(config):
+def extract_version(config):
     return config.split(" ")[1].strip()

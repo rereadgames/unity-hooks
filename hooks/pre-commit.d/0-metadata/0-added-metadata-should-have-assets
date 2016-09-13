@@ -2,18 +2,23 @@
 
 import sys
 
-from metadata import *
+from helpers.metadata import Files
 
 PROBLEM = "'{}' has been added but its asset is missing."
 
 if __name__ == "__main__":
     fail = False
 
-    metadata_missing_asset = added_metadata() - metadata_for(added_assets())
+    added_metadata = {file for file in Files.added if file.is_metadata}
 
-    for name in metadata_missing_asset:
-        if not is_directory_metadata(get_staged_content_for(name)):
-            print(PROBLEM.format(name), file=sys.stderr)
+    metadata_for_added_assets = \
+        {file.metadata for file in Files.added if file.is_asset}
+
+    metadata_missing_asset = added_metadata - metadata_for_added_assets
+
+    for file in metadata_missing_asset:
+        if not file.staged.is_directory_metadata:
+            print(PROBLEM.format(file.path), file=sys.stderr)
             fail = True
 
     if fail:

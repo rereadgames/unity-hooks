@@ -2,11 +2,8 @@
 
 import sys
 
-import git
-
-from version import *
-
-MULTIPLE_STAGED_ERROR = "Multiple files staged for '{}'."
+from helpers.version import VERSION_FILE, normalize, extract_version
+from helpers.metadata import Files
 
 EXPLAIN = """\
 The version of the project has changed from '{}' to '{}' (which I think is
@@ -21,32 +18,19 @@ ignore changes to the file in future with 'git update-index --assume-unchanged
 though.""".replace("\n", " ")
 
 
-def path_filter(path):
-    def f(entry):
-        return entry[1].path == path
-    return f
-
-
 if __name__ == "__main__":
-    repo = git.Repo(search_parent_directories=True)
-
     fail = False
 
-    for file in repo.head.commit.diff():
-        path = file.a_path
-        if file.a_path.endswith(VERSION_FILE):
-            index_version = None
-            for (stage, blob) in repo.index.iter_blobs(path_filter(path)):
-                if index_version:
-                    raise Exception(MULTIPLE_STAGED_ERROR.format(path))
-                index_version = extract_version(blob)
-            head_version = extract_version(repo.head.commit.tree[path])
+    for file in Files.modified:
+        if file.path.endswith(VERSION_FILE):
+            index_version = extract_version(file.staged.content)
+            head_version = extract_version(file.head.content)
 
             if head_version != index_version:
                 if head_version == normalize(index_version):
                     print(EXPLAIN.format(head_version, index_version),
                           file=sys.stderr)
-                    print(FIX.format(path))
+                    print(FIX.format(file.path))
                     fail = True
 
     if fail:

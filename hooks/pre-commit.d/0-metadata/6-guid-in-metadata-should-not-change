@@ -2,9 +2,7 @@
 
 import sys
 
-import git
-
-from metadata import *
+from helpers.metadata import Files
 
 MULTIPLE_STAGED_ERROR = "Multiple files staged for '{}'."
 
@@ -16,41 +14,25 @@ FIX = "You should revert it to the old version. If the old asset was deleted " \
       "the old asset and the creation of the new one across two commits."
 
 
-def path_filter(index_path):
-    def f(entry):
-        return entry[1].path == index_path
-    return f
-
-
-def extract_guid(obj):
-    for line in obj.data_stream.read().decode("utf-8").split("\n"):
-        if line.startswith("guid:"):
-            return line.split(" ")[1].strip()
-
-
 if __name__ == "__main__":
-    repo = git.Repo(search_parent_directories=True)
-
     fail = False
 
-    for file in repo.head.commit.diff():
-        if file.change_type in ["R", "M"]:
-            head_path = file.a_path
-            index_path = file.b_path
-            if file.a_path.endswith(META_EXT):
-                index_version = None
-                f = path_filter(index_path)
-                for (stage, blob) in repo.index.iter_blobs(f):
-                    if index_version:
-                        raise Exception(MULTIPLE_STAGED_ERROR.format(index_path))
-                    index_version = extract_guid(blob)
-                head_version = extract_guid(repo.head.commit.tree[head_path])
+    renamed_assets = \
+        {file for file in Files.renamed if file.is_asset}
 
-                if head_version != index_version:
-                    print(EXPLAIN.format(index_path),
-                          file=sys.stderr)
-                    print(FIX)
-                    fail = True
+    modified_metadata = \
+        {file for file in Files.modified if file.is_metadata}
+
+    changed_guids = \
+        ({file.metadata for file in renamed_assets
+          if file.metadata.staged.guid != file.renamed_from.metadata.head.guid} |
+         {file for file in modified_metadata
+          if file.staged.guid != file.head.guid})
+
+    for file in changed_guids:
+        print(EXPLAIN.format(file.path), file=sys.stderr)
+        print(FIX)
+        fail = True
 
     if fail:
         sys.exit(1)

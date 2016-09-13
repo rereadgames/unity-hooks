@@ -2,19 +2,27 @@
 
 import sys
 
-from metadata import *
+from helpers.metadata import Files
 
 PROBLEM = "'{}' has been added but its metadata is missing."
 
 if __name__ == "__main__":
     fail = False
 
-    assets_missing_metadata = added_assets() - assets_for(added_metadata())
+    added_assets = {file for file in Files.added if file.is_asset}
 
-    for name in assets_missing_metadata:
-        if name not in assets_for(added_metadata_mistaken_as_rename()):
-            print(PROBLEM.format(name), file=sys.stderr)
-            fail = True
+    assets_for_likely_missed_added_metadata = \
+        {file.asset for file in Files.likely_missed_added_metadata}
+
+    assets_for_added_metadata = \
+        ({file.asset for file in Files.added if file.is_metadata} |
+            assets_for_likely_missed_added_metadata)
+
+    assets_missing_metadata = added_assets - assets_for_added_metadata
+
+    for file in assets_missing_metadata:
+        print(PROBLEM.format(file.path), file=sys.stderr)
+        fail = True
 
     if fail:
         sys.exit(1)

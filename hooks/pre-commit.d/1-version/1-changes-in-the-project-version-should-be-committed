@@ -1,32 +1,35 @@
 #!/usr/bin/env python3
 
 import sys
-import os
 
 import git
 
-from version import *
-
+from helpers.version import VERSION_FILE, normalize, extract_version
+from helpers.metadata import Files
 
 if __name__ == "__main__":
     repo = git.Repo(search_parent_directories=True)
 
     mismatched_project_versions = set()
 
-    for file in repo.head.commit.diff(None):
-        path = file.a_path
-        if file.a_path.endswith(VERSION_FILE):
-            with open(os.path.join(repo.working_dir, path)) as f:
-                local_version = split_version(f.read())
-            remote_version = extract_version(repo.head.commit.tree[path])
+    for file in Files.working_directory:
+        if file.path.endswith(VERSION_FILE):
+            working_version = extract_version(file.working_dir.content)
+            head_version = extract_version(file.head.content)
 
-            if remote_version != normalize(local_version):
-                mismatched_project_versions.add((local_version, remote_version))
+            if file.staged.exists:
+                staged_version = extract_version(file.staged.content)
+                if staged_version == working_version:
+                    continue
 
-    for (local, remote) in mismatched_project_versions:
+            if head_version != normalize(working_version):
+                mismatched_project_versions.add((working_version, head_version))
+
+    for (working_version, head_version) in mismatched_project_versions:
         print("The version of the project has changed from '{}' to '{}' "
               "(which I think is equivalent to '{}'), but this has not been "
-              "committed.".format(remote, local, normalize(local)),
+              "committed.".format(head_version, working_version,
+                                  normalize(working_version)),
               file=sys.stderr)
         print("This could be a false positive if these are the same version "
               "for different platforms. If so, please update the hook.")

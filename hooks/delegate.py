@@ -82,6 +82,11 @@ if __name__ == "__main__":
         pass_prefix = colorama.Fore.GREEN
         suffix = colorama.Style.RESET_ALL
 
+    python_path = os.environ.get("PYTHONPATH", "")
+    if python_path:
+        python_path += os.pathsep
+    os.environ["PYTHONPATH"] = python_path + script_path
+
     scripts_path = os.path.join(script_path, hook + ".d")
     for subdir, dirs, files in natsorted(os.walk(scripts_path)):
         groups = [group for group in os.path.relpath(subdir, scripts_path).split(os.path.sep) if group != "."]

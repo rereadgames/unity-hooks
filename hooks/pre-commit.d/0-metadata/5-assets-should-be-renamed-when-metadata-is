@@ -2,22 +2,29 @@
 
 import sys
 
-from metadata import *
+from helpers.metadata import Files
 
 PROBLEM = "'{}' has been renamed (from '{}') but its asset has not."
 
 if __name__ == "__main__":
     fail = False
 
-    renamed_metadata_without_renamed_asset = \
-        renamed_metadata() - metadata_for(renamed_assets())
+    renamed_metadata = {file for file in Files.renamed if file.is_metadata}
 
-    for old_name, new_name in renamed_metadata_without_renamed_asset:
-        if (old_name, new_name) not in likely_mistaken_renames():
-            if not (is_directory_metadata(get_staged_content_for(new_name)) or
-                    is_directory_metadata(get_head_content_for(old_name))):
-                print(PROBLEM.format(new_name, old_name), file=sys.stderr)
-                fail = True
+    metadata_for_renamed_assets = \
+        {file.metadata for file in Files.renamed if file.is_asset}
+
+    renamed_metadata_without_renamed_asset = \
+        renamed_metadata - metadata_for_renamed_assets
+
+    renamed_metadata_without_renamed_asset -= \
+        Files.renames_likely_to_be_different_files
+
+    for file in renamed_metadata_without_renamed_asset:
+        if not (file.staged.is_directory_metadata or
+                file.renamed_from.head.is_directory_metadata):
+            print(PROBLEM.format(file.path, file.renamed_from_path), file=sys.stderr)
+            fail = True
 
     if fail:
         sys.exit(1)

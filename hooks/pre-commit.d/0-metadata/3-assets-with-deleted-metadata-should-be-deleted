@@ -2,19 +2,24 @@
 
 import sys
 
-from metadata import *
+from helpers.metadata import Files
 
 PROBLEM = "'{}' has been deleted but its asset has not been."
 
 if __name__ == "__main__":
     fail = False
 
-    deleted_metadata_with_remaining_asset = \
-        deleted_metadata() - metadata_for(deleted_assets())
+    deleted_metadata = {file for file in Files.deleted if file.is_metadata}
 
-    for name in deleted_metadata_with_remaining_asset:
-        if not is_directory_metadata(get_head_content_for(name)):
-            print(PROBLEM.format(name), file=sys.stderr)
+    metadata_for_deleted_assets = \
+        {file.metadata for file in Files.deleted if file.is_asset}
+
+    deleted_metadata_with_remaining_asset = \
+        deleted_metadata - metadata_for_deleted_assets
+
+    for file in deleted_metadata_with_remaining_asset:
+        if not file.head.is_directory_metadata:
+            print(PROBLEM.format(file.path), file=sys.stderr)
             fail = True
 
     if fail:

@@ -1,0 +1,29 @@
+#!/usr/bin/env python3
+
+import sys
+
+from helpers.metadata import Files
+
+EXPLAIN = """\
+The file '{}' contains Debug.Log calls. These should not be present in
+committed code, remove them.""".replace("\n", " ")
+
+
+SOURCE_EXT = ".cs"
+
+PROBLEM_CALL = "Debug.Log("
+
+
+if __name__ == "__main__":
+    logs = set()
+
+    for file in (Files.modified | Files.added | Files.renamed):
+        if (file.path.endswith(SOURCE_EXT) and
+                PROBLEM_CALL in file.staged.content):
+            logs.add(file)
+
+    for file in logs:
+        print(EXPLAIN.format(file.path), file=sys.stderr)
+
+    if logs:
+        sys.exit(1)
