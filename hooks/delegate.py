@@ -2,6 +2,7 @@
 
 import sys
 import os
+import shlex
 
 from natsort import natsorted
 import envoy
@@ -32,10 +33,13 @@ pre-push""".split("\n")
 
 BULLET_POINTS = "*-+=#~"
 
-PASS = " ✓ PASS"
+if sys.stdout.encoding.lower().startswith('utf-'):
+    PASS = " ✓ PASS"
+    FAIL = " ✗ FAIL"
+else:
+    PASS = " / PASS"
+    FAIL = " x FAIL"
 WARN = " ! WARN"
-FAIL = " ✗ FAIL"
-
 
 def bullet(depth):
     return BULLET_POINTS[depth % len(BULLET_POINTS)]
@@ -56,6 +60,18 @@ def indent(text, depth):
     padding = " " * (depth * 4)
     return padding + "\n{0}".format(padding).join(text.split("\n")).rstrip()
 
+def platform_command(path):
+    if sys.platform.startswith("win"):
+        with open(path) as file:
+            part = file.read(2)
+            if part == "#!":
+                shebang = shlex.split(file.readline().strip())
+                if shebang:
+                    shebang.pop(0)
+                    path = path.replace('\\', '/')
+                    shebang.append(path)
+                    return " ".join(shebang)
+    return path
 
 if __name__ == "__main__":
     if colorama:
@@ -100,7 +116,7 @@ if __name__ == "__main__":
                 continue
             path = os.path.join(subdir, filename)
             file_depth = depth + 1
-            result = envoy.run(path, timeout=2)
+            result = envoy.run(platform_command(path), timeout=2)
             out_depth = file_depth + 1
             out = indent(result.std_out, out_depth) if result.std_out else None
             err = indent(result.std_err, out_depth) if result.std_err else None
